@@ -15,11 +15,12 @@ def isfloat(string: str) -> bool:
     except ValueError:
         return False
 
-NOME_ENTRADA = sys.argv[1]
+
+if __name__ == '__main__':
+    NOME_ENTRADA = sys.argv[1]
 
 
 def ler_entrada() -> tuple:
-
     with open(NOME_ENTRADA, 'r') as entrada:
         quantidade_sistemas, dimencao_matriz, margem_erro = entrada.readline().split(' ')
 
@@ -75,14 +76,8 @@ def somar_linhas_com_multiplicador(linha1: np.array
     return linha1
 
 
-A, B, dimencao_matriz, quantidade_sistemas, margem_erro = ler_entrada()
-
-
 # Eliminação de Gauss
-def pivoteamento(A: np.array, b: np.array) -> np.array:
-    n = dimencao_matriz
-    start = time.perf_counter()
-
+def pivoteamento(A: np.array, b: np.array, n: int) -> np.array:
     for i in range(n - 1):
         pivo = A[i][i]
         troca_pivo = i
@@ -114,9 +109,6 @@ def pivoteamento(A: np.array, b: np.array) -> np.array:
         result[i] = b[i] / A[i][i]
         for j in range(i - 1, -1, -1):
             b[j] = b[j] - A[j][i] * result[i]
-
-    print(f'resolvido em: {start - time.perf_counter()} segundos')
-    print('resultado: ', result)
 
     return result
 
@@ -172,7 +164,6 @@ class Lu:
             for j in range(i + 1, self.size):
                 sum += self.matrizU[i][j] * self.arrayX[j]
             self.arrayX[i] = (self.arrayY[i] - sum) / self.matrizU[i][i]
-
 
 
 def pegar_x_inicial(A: np.array, b: np.array) -> np.array:
@@ -235,67 +226,67 @@ def resolver_sistema_gauss_seidel(A: np.array,
 
 
 # chamada pivoteamento para todos os sistemas
+if __name__ == '__main__':
+    A, B, dimencao_matriz, quantidade_sistemas, margem_erro = ler_entrada()
+    print('Eliminação de Gauss:')
+    for i in range(0, quantidade_sistemas):
+        pivoteamento(A.copy(), B[i].copy(), dimencao_matriz)
 
-print('Eliminação de Gauss:')
-for i in range(0, quantidade_sistemas):
+    print('\n\n')
 
-    pivoteamento(A.copy(), B[i].copy())
-
-print('\n\n')
-
-print('Metodo Gauss-Jacob:')
-for i in range(0, quantidade_sistemas):
-    print('Solução: ')
-
-    start = time.perf_counter()
-    print(resolver_sistema_gauss_jacob(A.copy(), B[i].copy(), pegar_x_inicial(A, B[i]), margem_erro))
-    print(f'Resolvido em {start - time.perf_counter()} segundos')
-
-print('\n\n')
-
-print('Metodo Gauss-Seidel:')
-for i in range(0, quantidade_sistemas):
-    print('Solução: ')
-
-    start = time.perf_counter()
-    print(resolver_sistema_gauss_seidel(A.copy(), B[i].copy(), pegar_x_inicial(A, B[i]), margem_erro))
-    print(f'Resolvido em {start - time.perf_counter()} segundos')
-
-print('\n\n\n')
-
-print('Fatoração LU: ')
-with open(NOME_ENTRADA, 'r') as file:
-    # Leitura da quantidade de matrizes, tamanho do vetor e precisão
-    line = file.readline().split()
-    num_matrices = int(line[0])
-    size = int(line[1])
-    matrizA = np.zeros((size, size))
-
-    # Leitura da matriz A
-    for i in range(size):
-        matrizA[i] = list(map(float, file.readline().split()))
-
-    for _ in range(num_matrices):
-        lu = Lu(size)
-
-        # Definir a matriz A para cada iteração
-        lu.sistema = matrizA.copy()
-
-        # Leitura da matriz B
-        lu.arrayR = list(map(float, file.readline().split()))
+    print('Metodo Gauss-Jacob:')
+    for i in range(0, quantidade_sistemas):
+        print('Solução: ')
 
         start = time.perf_counter()
-        for k in range(size - 1):
-            lu.OperacaoPivo(k)
-
-        lu.MatrizL()
-
-        lu.MatrizU()
-
-        lu.LY()
-
-        lu.UX()
-
+        print(resolver_sistema_gauss_jacob(A.copy(), B[i].copy(), pegar_x_inicial(A, B[i]), margem_erro))
         print(f'Resolvido em {start - time.perf_counter()} segundos')
-        print('Resultado: ')
-        lu.ImprimeVetor(lu.arrayX)
+
+    print('\n\n')
+
+    print('Metodo Gauss-Seidel:')
+    for i in range(0, quantidade_sistemas):
+        print('Solução: ')
+
+        start = time.perf_counter()
+        print(resolver_sistema_gauss_seidel(A.copy(), B[i].copy(), pegar_x_inicial(A, B[i]), margem_erro))
+        print(f'Resolvido em {start - time.perf_counter()} segundos')
+
+    print('\n\n\n')
+
+    print('Fatoração LU: ')
+    with open(NOME_ENTRADA, 'r') as file:
+        # Leitura da quantidade de matrizes, tamanho do vetor e precisão
+        line = file.readline().split()
+        num_matrices = int(line[0])
+        size = int(line[1])
+        matrizA = np.zeros((size, size))
+
+        # Leitura da matriz A
+        for i in range(size):
+            matrizA[i] = list(map(float, file.readline().split()))
+
+        for _ in range(num_matrices):
+            lu = Lu(size)
+
+            # Definir a matriz A para cada iteração
+            lu.sistema = matrizA.copy()
+
+            # Leitura da matriz B
+            lu.arrayR = list(map(float, file.readline().split()))
+
+            start = time.perf_counter()
+            for k in range(size - 1):
+                lu.OperacaoPivo(k)
+
+            lu.MatrizL()
+
+            lu.MatrizU()
+
+            lu.LY()
+
+            lu.UX()
+
+            print(f'Resolvido em {start - time.perf_counter()} segundos')
+            print('Resultado: ')
+            lu.ImprimeVetor(lu.arrayX)
