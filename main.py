@@ -13,7 +13,7 @@ class Dados:
         self.tempoArray = list()
         self.quantidadeArray = list()
 
-    def adicionarTempoEQuantidade(self, novoTempo: int, novaQuantidade: int):
+    def adicionarTempoEQuantidade(self, novoTempo: float, novaQuantidade: float):
         self.tempoArray.append(novoTempo)
         self.quantidadeArray.append(novaQuantidade)
 
@@ -30,19 +30,55 @@ class Dados:
         return zip(self.tempoArray, self.quantidadeArray)
 
     def calcularCoeficienteMatrizA(self, i: int, j: int):
-        soma: np.int64 = 0
+        soma: np.int = 0
         for tempo in self.tempoArray:
-            soma += np.int64(math.pow(tempo, i + j))
+            soma += math.pow(tempo, i + j)
 
         return soma
 
     def calcularCoeficienteVetorB(self, i: int):
-        soma: np.int64 = 0
+        soma: float = 0
 
         for tempo, quantidade in zip(self.tempoArray, self.quantidadeArray):
-            soma += np.int64(quantidade) * np.int64(math.pow(tempo, i))
+            soma += quantidade * math.pow(tempo, i)
 
         return soma
+
+    def calcularLogaritmoVetorC(self):
+        novo_vetor = []
+        for quantidade in self.quantidadeArray:
+            log = math.log(quantidade)
+            novo_vetor.append(log)
+        return novo_vetor
+
+    def calcularMultiplicacaoVetorTeLogVetorC(self, logC):
+        novo_vetor = []
+        for tempo, logQntd in zip(self.tempoArray, logC):
+            resultado = tempo * logQntd
+            novo_vetor.append(resultado)
+        return novo_vetor
+
+    def calcularVetorBLog(self):
+        logC = self.calcularLogaritmoVetorC()
+        tLogC = self.calcularMultiplicacaoVetorTeLogVetorC(logC)
+        print('logC: ' + str(sum(logC)))
+        print('t*logC ' + str(sum(tLogC)))
+        return [sum(logC), sum(tLogC)]
+
+    def calcularTaoQuadrado(self):
+        novo_vetor = []
+        for tempo in self.tempoArray:
+            novo_vetor.append(tempo*tempo)
+        return novo_vetor
+
+    def calcularMatrizALog(self):
+        nova_matriz = np.zeros((2,2))
+        nova_matriz[0][0] = len(self.tempoArray)
+        nova_matriz[0][1] = sum(self.tempoArray)
+        nova_matriz[1][0] = nova_matriz[0][1]
+        nova_matriz[1][1] = sum(self.calcularTaoQuadrado())
+        return nova_matriz
+
 
 
 class Regressor:
@@ -58,37 +94,37 @@ class Regressor:
             leitor = csv.reader(arquivo, delimiter=',')
 
             for linha in leitor:
-                tempo = int(linha[0])
-                quantidade = int(linha[1])
+                tempo = float(linha[0])
+                quantidade = float(linha[1])
                 self.dados.adicionarTempoEQuantidade(tempo, quantidade)
 
     def calcularCoeficientesPrimeiroGrau(self):
-        matrizA: np.array = np.zeros((2, 2), np.int64)
-        vetorB: np.array = np.zeros(2, np.int64)
+        matrizA: np.array = np.zeros((2, 2), np.float64)
+        vetorB: np.array = np.zeros(2, np.float64)
 
         for i in range(2):
             for j in range(i + 1):
-                coeficiente: np.int64 = self.dados.calcularCoeficienteMatrizA(i, j)
-                matrizA[i][j] = np.int64(coeficiente)
+                coeficiente: np.float64 = self.dados.calcularCoeficienteMatrizA(i, j)
+                matrizA[i][j] = np.float64(coeficiente)
 
                 if i != j:
-                    matrizA[j][i] = np.int64(coeficiente)
+                    matrizA[j][i] = np.float64(coeficiente)
 
             vetorB[i] = self.dados.calcularCoeficienteVetorB(i)
 
         return pivoteamento(matrizA, vetorB, 2)
 
     def calcularCoeficientesSegundoGrau(self):
-        matrizA: np.array = np.zeros((3, 3), np.int64)
-        vetorB: np.array = np.zeros(3, np.int64)
+        matrizA: np.array = np.zeros((3, 3), np.float64)
+        vetorB: np.array = np.zeros(3, np.float64)
 
         for i in range(3):
             for j in range(i + 1):
-                coeficiente: np.int64 = self.dados.calcularCoeficienteMatrizA(i, j)
-                matrizA[i][j] = np.int64(coeficiente)
+                coeficiente: np.float64 = self.dados.calcularCoeficienteMatrizA(i, j)
+                matrizA[i][j] = np.float64(coeficiente)
 
                 if i != j:
-                    matrizA[j][i] = np.int64(coeficiente)
+                    matrizA[j][i] = np.float64(coeficiente)
 
             vetorB[i] = self.dados.calcularCoeficienteVetorB(i)
 
@@ -106,7 +142,11 @@ if __name__ == '__main__':
     regressor = Regressor(nomeArquivo)
     coeficientesDadosPrimeiroGrau: list
     coeficientesDadosSegundoGrau: list
-    coeficientesDadosExponencial: list
+    coeficientesDadosExponencial: list = pivoteamento(regressor.dados.calcularMatrizALog(),
+                                                      regressor.dados.calcularVetorBLog(), 2)
+
+    coeficientesDadosExponencial[0] = math.pow(math.e, coeficientesDadosExponencial[0])
+
 
     print('imprimindo regressões do dado: ')
 
@@ -118,3 +158,5 @@ if __name__ == '__main__':
 
     print('coeficientes do segundo grau:')
     imprimirCoeficientes(coeficientesDadosSegundoGrau)
+    print('coeficientes exponencial:')
+    imprimirCoeficientes(coeficientesDadosExponencial)
