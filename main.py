@@ -2,7 +2,42 @@ import math
 
 import numpy as np
 import csv
-from escalonador import pivoteamento
+
+
+def pivoteamento(A: np.array, b: np.array, n: int) -> np.array:
+    for i in range(n - 1):
+        pivo = A[i][i]
+        troca_pivo = i
+
+        # Identificando maior pivo da coluna
+        for j in range(i + 1, n):
+            if abs(A[j][i]) > abs(pivo):
+                pivo = A[j][i]
+                troca_pivo = j
+
+        # troca de linha, pivo na posição diferente de i
+        if troca_pivo != i:
+            b[i], b[troca_pivo] = b[troca_pivo], b[i]
+            for k in range(n):
+                A[i][k], A[troca_pivo][k] = A[troca_pivo][k], A[i][k]
+
+        # divisão dos elementos
+        for j in range(i + 1, n):
+            matriz_aux = A[j][i] / A[i][i]
+            A[j][i] = 0
+
+            for k in range(i + 1, n):
+                A[j][k] = A[j][k] - (matriz_aux * A[i][k])
+            b[j] = b[j] - (matriz_aux * b[i])
+
+    result: np.array = np.zeros(n)
+    # calculo triangular superior
+    for i in range(n - 1, -1, -1):
+        result[i] = b[i] / A[i][i]
+        for j in range(i - 1, -1, -1):
+            b[j] = b[j] - A[j][i] * result[i]
+
+    return result
 
 
 class Dados:
@@ -29,8 +64,8 @@ class Dados:
     def pegarDados(self):
         return zip(self.tempoArray, self.quantidadeArray)
 
-    def calcularCoeficienteMatrizA(self, i: int, j: int):
-        soma: np.int = 0
+    def calcularCoeficienteMatrizA(self, i: int, j: int) -> float:
+        soma: float = 0.0
         for tempo in self.tempoArray:
             soma += math.pow(tempo, i + j)
 
@@ -101,7 +136,7 @@ class Regressor:
 
         for i in range(2):
             for j in range(i + 1):
-                coeficiente: np.float64 = self.dados.calcularCoeficienteMatrizA(i, j)
+                coeficiente: np.float64 = np.float64(self.dados.calcularCoeficienteMatrizA(i, j))
                 matrizA[i][j] = np.float64(coeficiente)
 
                 if i != j:
@@ -117,7 +152,7 @@ class Regressor:
 
         for i in range(3):
             for j in range(i + 1):
-                coeficiente: np.float64 = self.dados.calcularCoeficienteMatrizA(i, j)
+                coeficiente: np.float64 = np.float64(self.dados.calcularCoeficienteMatrizA(i, j))
                 matrizA[i][j] = np.float64(coeficiente)
 
                 if i != j:
@@ -187,15 +222,13 @@ if __name__ == '__main__':
     regressor = Regressor(nomeArquivo)
     coeficientesDadosPrimeiroGrau: list
     coeficientesDadosSegundoGrau: list
-    coeficientesDadosExponencial: list = pivoteamento(regressor.dados.calcularMatrizALog(),
-                                                      regressor.dados.calcularVetorBLog(), 2)
+    coeficientesDadosExponencial: list = list(pivoteamento(regressor.dados.calcularMatrizALog(),
+                                                      regressor.dados.calcularVetorBLog(), 2))
 
     coeficientesDadosExponencial[0] = math.pow(math.e, coeficientesDadosExponencial[0])
 
-
-
-    coeficientesDadosPrimeiroGrau = regressor.calcularCoeficientesPrimeiroGrau()
-    coeficientesDadosSegundoGrau = regressor.calcularCoeficientesSegundoGrau()
+    coeficientesDadosPrimeiroGrau = list(regressor.calcularCoeficientesPrimeiroGrau())
+    coeficientesDadosSegundoGrau = list(regressor.calcularCoeficientesSegundoGrau())
 
     R2PrimeiroGrau = regressor.calcularR2Polinomio(coeficientesDadosPrimeiroGrau)
     R2SegundoGrau = regressor.calcularR2Polinomio(coeficientesDadosSegundoGrau)
