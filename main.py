@@ -46,73 +46,53 @@ class Dados:
 
 
 class Regressor:
-    dados: list[Dados]
+    dados: Dados
 
     def __init__(self, nomeArquivo: str):
         self.lerDados(nomeArquivo)
 
     def lerDados(self, nomeArquivo: str):
-        self.dados = list()
+        self.dados = Dados()
 
         with open(nomeArquivo, 'r') as arquivo:
             leitor = csv.reader(arquivo, delimiter=',')
 
             for linha in leitor:
-                i = 0
-                for tempo, quantidade in [(linha[i], linha[i + 1])
-                                          for i in range(0, int(len(linha)), 2)]:
-                    try:
-                        t = self.dados[i]
-                    except IndexError:
-                        self.dados.append(Dados())
+                tempo = int(linha[0])
+                quantidade = int(linha[1])
+                self.dados.adicionarTempoEQuantidade(tempo, quantidade)
 
-                    self.dados[i].adicionarTempoEQuantidade(int(tempo), int(quantidade))
-                    i = i + 1
-
-    def imprimirDados(self):
-        for dados in self.dados:
-            dados.imprimirDados()
-
-    def pegarDadosNoIndex(self, i):
-        return self.dados[i].pegarDados()
-
-    def pegarDadosEnumeradosNoIndex(self, i):
-        return self.dados[i].pegarDadosEnumerados()
-
-    def calcularCoeficientesPrimeiroGrau(self, dadoIndex):
+    def calcularCoeficientesPrimeiroGrau(self):
         matrizA: np.array = np.zeros((2, 2), np.int64)
         vetorB: np.array = np.zeros(2, np.int64)
 
         for i in range(2):
             for j in range(i + 1):
-                coeficiente: np.int64 = self.dados[dadoIndex].calcularCoeficienteMatrizA(i, j)
+                coeficiente: np.int64 = self.dados.calcularCoeficienteMatrizA(i, j)
                 matrizA[i][j] = np.int64(coeficiente)
 
                 if i != j:
                     matrizA[j][i] = np.int64(coeficiente)
 
-            vetorB[i] = self.dados[dadoIndex].calcularCoeficienteVetorB(i)
+            vetorB[i] = self.dados.calcularCoeficienteVetorB(i)
 
         return pivoteamento(matrizA, vetorB, 2)
 
-    def calcularCoeficientesSegundoGrau(self, dadoIndex):
+    def calcularCoeficientesSegundoGrau(self):
         matrizA: np.array = np.zeros((3, 3), np.int64)
         vetorB: np.array = np.zeros(3, np.int64)
 
         for i in range(3):
             for j in range(i + 1):
-                coeficiente: np.int64 = self.dados[dadoIndex].calcularCoeficienteMatrizA(i, j)
+                coeficiente: np.int64 = self.dados.calcularCoeficienteMatrizA(i, j)
                 matrizA[i][j] = np.int64(coeficiente)
 
                 if i != j:
                     matrizA[j][i] = np.int64(coeficiente)
 
-            vetorB[i] = self.dados[dadoIndex].calcularCoeficienteVetorB(i)
+            vetorB[i] = self.dados.calcularCoeficienteVetorB(i)
 
         return pivoteamento(matrizA, vetorB, 3)
-
-    def pegarQuantidadeDados(self):
-        return len(self.dados)
 
 
 def imprimirCoeficientes(coeficientes):
@@ -124,20 +104,17 @@ if __name__ == '__main__':
     nomeArquivo = 'dados.csv'
 
     regressor = Regressor(nomeArquivo)
-    coeficientesDadosPrimeiroGrau: list = list()
-    coeficientesDadosSegundoGrau: list = list()
-    coeficientesDadosExponencial: list = list()
+    coeficientesDadosPrimeiroGrau: list
+    coeficientesDadosSegundoGrau: list
+    coeficientesDadosExponencial: list
 
-    for i in range(regressor.pegarQuantidadeDados()):
-        print(str(i+1) + 'ª Tabela de Dados:')
+    print('imprimindo regressões do dado: ')
 
-        coeficientesDadosPrimeiroGrau.append(regressor.calcularCoeficientesPrimeiroGrau(i))
-        coeficientesDadosSegundoGrau.append(regressor.calcularCoeficientesSegundoGrau(i))
+    coeficientesDadosPrimeiroGrau = regressor.calcularCoeficientesPrimeiroGrau()
+    coeficientesDadosSegundoGrau = regressor.calcularCoeficientesSegundoGrau()
 
-        print('coeficientes do primeiro grau:')
-        imprimirCoeficientes(coeficientesDadosPrimeiroGrau[i])
+    print('coeficientes do primeiro grau:')
+    imprimirCoeficientes(coeficientesDadosPrimeiroGrau)
 
-        print('coeficientes do segundo grau:')
-        imprimirCoeficientes(coeficientesDadosSegundoGrau[i])
-
-        print()
+    print('coeficientes do segundo grau:')
+    imprimirCoeficientes(coeficientesDadosSegundoGrau)
