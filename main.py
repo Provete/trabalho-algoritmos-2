@@ -3,6 +3,10 @@ import math
 import numpy as np
 import csv
 
+# Feito por: Gustavo Provete de Andrade
+#            Ruan Vieira Ribeiro
+#            Tiago Artém dos Santos
+
 
 def pivoteamento(A: np.array, b: np.array, n: int) -> np.array:
     for i in range(n - 1):
