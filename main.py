@@ -61,24 +61,21 @@ class Dados:
     def calcularVetorBLog(self):
         logC = self.calcularLogaritmoVetorC()
         tLogC = self.calcularMultiplicacaoVetorTeLogVetorC(logC)
-        print('logC: ' + str(sum(logC)))
-        print('t*logC ' + str(sum(tLogC)))
         return [sum(logC), sum(tLogC)]
 
     def calcularTaoQuadrado(self):
         novo_vetor = []
         for tempo in self.tempoArray:
-            novo_vetor.append(tempo*tempo)
+            novo_vetor.append(tempo * tempo)
         return novo_vetor
 
     def calcularMatrizALog(self):
-        nova_matriz = np.zeros((2,2))
+        nova_matriz = np.zeros((2, 2))
         nova_matriz[0][0] = len(self.tempoArray)
         nova_matriz[0][1] = sum(self.tempoArray)
         nova_matriz[1][0] = nova_matriz[0][1]
         nova_matriz[1][1] = sum(self.calcularTaoQuadrado())
         return nova_matriz
-
 
 
 class Regressor:
@@ -130,6 +127,54 @@ class Regressor:
 
         return pivoteamento(matrizA, vetorB, 3)
 
+    def calcularErroSomaDosQuadradosFuncaoPolinomial(self, coeficientes: list[float]) -> float:
+        somaDosQuadrados: float = 0
+
+        for tempo, quantidade in zip(self.dados.tempoArray, self.dados.quantidadeArray):
+            y: float = 0
+
+            for i, coeficiente in enumerate(coeficientes):
+                y += coeficiente * math.pow(tempo, i)
+
+            somaDosQuadrados += (quantidade - y) ** 2
+
+        return somaDosQuadrados
+
+    def calcularErroSomaDosQuadradosFuncaoExponencial(self, coeficientes: list[float]) -> float:
+        somaDosQuadrados: float = 0
+        multiplicador, potencia = coeficientes
+
+        for tempo, quantidade in zip(self.dados.tempoArray, self.dados.quantidadeArray):
+            y: float = multiplicador * math.pow(math.e, potencia * tempo)
+
+            somaDosQuadrados += (quantidade - y) ** 2
+        return somaDosQuadrados
+
+    def calcularSomaDosQuadradosDados(self) -> float:
+        somaDosQuadrados: float = 0
+        mediaQuantidade = np.mean(self.dados.quantidadeArray)
+
+        for quantidade in self.dados.quantidadeArray:
+            somaDosQuadrados += (quantidade - mediaQuantidade) ** 2
+
+        return somaDosQuadrados
+
+    def calcularR2Polinomio(self, coeficientes: list[float]) -> float:
+        somaDosErrosQuadradosDados = self.calcularSomaDosQuadradosDados()
+        somaDosErrosQuadradosFuncao = self.calcularErroSomaDosQuadradosFuncaoPolinomial(coeficientes)
+
+        razao = somaDosErrosQuadradosFuncao / somaDosErrosQuadradosDados
+        R2 = 1 - razao
+        return R2
+
+    def calcularR2Exponencial(self, coeficientes: list[float]) -> float:
+        somaDosErrosQuadradosDados = self.calcularSomaDosQuadradosDados()
+        somaDosErrosQuadradosFuncao = self.calcularErroSomaDosQuadradosFuncaoExponencial(coeficientes)
+
+        razao = somaDosErrosQuadradosFuncao / somaDosErrosQuadradosDados
+        R2 = 1 - razao
+        return R2
+
 
 def imprimirCoeficientes(coeficientes):
     for i, coeficiente in enumerate(coeficientes):
@@ -148,15 +193,37 @@ if __name__ == '__main__':
     coeficientesDadosExponencial[0] = math.pow(math.e, coeficientesDadosExponencial[0])
 
 
-    print('imprimindo regressões do dado: ')
 
     coeficientesDadosPrimeiroGrau = regressor.calcularCoeficientesPrimeiroGrau()
     coeficientesDadosSegundoGrau = regressor.calcularCoeficientesSegundoGrau()
 
+    R2PrimeiroGrau = regressor.calcularR2Polinomio(coeficientesDadosPrimeiroGrau)
+    R2SegundoGrau = regressor.calcularR2Polinomio(coeficientesDadosSegundoGrau)
+    R2Exponencial = regressor.calcularR2Exponencial(coeficientesDadosExponencial)
+
+    """
+    print('imprimindo regressões do dado: ')
     print('coeficientes do primeiro grau:')
     imprimirCoeficientes(coeficientesDadosPrimeiroGrau)
+    print('\tR² = ' + str(R2PrimeiroGrau))
 
     print('coeficientes do segundo grau:')
     imprimirCoeficientes(coeficientesDadosSegundoGrau)
+    print('\tR² = ' + str(R2SegundoGrau))
+
     print('coeficientes exponencial:')
     imprimirCoeficientes(coeficientesDadosExponencial)
+    print('\tR² = ' + str(R2Exponencial))
+
+    print()"""
+
+    listaR2 = [R2PrimeiroGrau, R2SegundoGrau, R2Exponencial]
+
+    maiorR2 = max(listaR2)
+
+    if maiorR2 == R2PrimeiroGrau:
+        print('O modelo que melhor se ajustou foi o de primeiro grau, com R² = ' + str(R2PrimeiroGrau))
+    elif maiorR2 == R2SegundoGrau:
+        print('O modelo que melhor se ajustou foi o de segundo grau, com R² = ' + str(R2SegundoGrau))
+    elif maiorR2 == R2Exponencial:
+        print('O modelo que melhor se ajustou foi o de exponencial, com R² = ' + str(R2Exponencial))
